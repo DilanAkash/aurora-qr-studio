@@ -264,7 +264,7 @@ END:VCARD`;
           className="text-center mb-8"
         >
           <h1 className="text-4xl lg:text-6xl font-bold gradient-text mb-4">
-            QR Generator Pro
+            Scan Me Maybe
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Create stunning, customizable QR codes with advanced styling options and instant preview
