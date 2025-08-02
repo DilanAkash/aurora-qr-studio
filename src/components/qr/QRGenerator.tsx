@@ -46,10 +46,27 @@ interface QRData {
   type: 'text' | 'url' | 'contact' | 'wifi' | 'email' | 'phone' | 'sms';
   content: string;
   metadata?: {
-    name?: string;
-    email?: string;
-    phone?: string;
+    // Contact fields
+    firstName?: string;
+    lastName?: string;
     organization?: string;
+    position?: string;
+    phoneWork?: string;
+    phonePrivate?: string;
+    phoneMobile?: string;
+    faxWork?: string;
+    faxPrivate?: string;
+    email?: string;
+    website?: string;
+    location?: string;
+    street?: string;
+    zipcode?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    // Other fields
+    name?: string;
+    phone?: string;
     ssid?: string;
     password?: string;
     encryption?: string;
@@ -92,12 +109,23 @@ const QRGenerator: React.FC = () => {
       // Format content based on type
       switch (qrData.type) {
         case 'contact':
+          const meta = qrData.metadata;
+          const fullName = `${meta?.firstName || ''} ${meta?.lastName || ''}`.trim();
           content = `BEGIN:VCARD
 VERSION:3.0
-FN:${qrData.metadata?.name || ''}
-ORG:${qrData.metadata?.organization || ''}
-TEL:${qrData.metadata?.phone || ''}
-EMAIL:${qrData.metadata?.email || ''}
+FN:${fullName}
+N:${meta?.lastName || ''};${meta?.firstName || ''};;;
+ORG:${meta?.organization || ''}
+TITLE:${meta?.position || ''}
+TEL;TYPE=WORK:${meta?.phoneWork || ''}
+TEL;TYPE=HOME:${meta?.phonePrivate || ''}
+TEL;TYPE=CELL:${meta?.phoneMobile || ''}
+FAX;TYPE=WORK:${meta?.faxWork || ''}
+FAX;TYPE=HOME:${meta?.faxPrivate || ''}
+EMAIL:${meta?.email || ''}
+URL:${meta?.website || ''}
+ADR;TYPE=WORK:;;${meta?.street || ''};${meta?.city || ''};${meta?.state || ''};${meta?.zipcode || ''};${meta?.country || ''}
+NOTE:${meta?.location || ''}
 END:VCARD`;
           break;
         case 'wifi':
@@ -251,7 +279,7 @@ END:VCARD`;
             className="lg:col-span-2 space-y-6"
           >
             {/* Data Input */}
-            <Card className="glass-card">
+            <Card className="glass-card glass-intense">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
@@ -295,53 +323,232 @@ END:VCARD`;
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="contact" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Full Name</Label>
-                        <Input
-                          placeholder="John Doe"
-                          value={qrData.metadata?.name || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            content: e.target.value,
-                            metadata: { ...prev.metadata, name: e.target.value }
-                          }))}
-                        />
+                  <TabsContent value="contact" className="space-y-6">
+                    {/* Personal Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-primary">Personal Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>First Name</Label>
+                          <Input
+                            placeholder="John"
+                            value={qrData.metadata?.firstName || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              content: `${e.target.value} ${prev.metadata?.lastName || ''}`.trim(),
+                              metadata: { ...prev.metadata, firstName: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Last Name</Label>
+                          <Input
+                            placeholder="Doe"
+                            value={qrData.metadata?.lastName || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              content: `${prev.metadata?.firstName || ''} ${e.target.value}`.trim(),
+                              metadata: { ...prev.metadata, lastName: e.target.value }
+                            }))}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label>Organization</Label>
-                        <Input
-                          placeholder="Company Inc."
-                          value={qrData.metadata?.organization || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            metadata: { ...prev.metadata, organization: e.target.value }
-                          }))}
-                        />
+                    </div>
+
+                    {/* Professional Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-secondary">Professional Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Organization</Label>
+                          <Input
+                            placeholder="Company Inc."
+                            value={qrData.metadata?.organization || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, organization: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Position (Work)</Label>
+                          <Input
+                            placeholder="Software Engineer"
+                            value={qrData.metadata?.position || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, position: e.target.value }
+                            }))}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <Input
-                          placeholder="+1 (555) 123-4567"
-                          value={qrData.metadata?.phone || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            metadata: { ...prev.metadata, phone: e.target.value }
-                          }))}
-                        />
+                    </div>
+
+                    {/* Contact Numbers */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-accent">Contact Numbers</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <Label>Phone (Work)</Label>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={qrData.metadata?.phoneWork || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, phoneWork: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Phone (Private)</Label>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={qrData.metadata?.phonePrivate || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, phonePrivate: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Phone (Mobile)</Label>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={qrData.metadata?.phoneMobile || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, phoneMobile: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Fax (Work)</Label>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={qrData.metadata?.faxWork || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, faxWork: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Fax (Private)</Label>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={qrData.metadata?.faxPrivate || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, faxPrivate: e.target.value }
+                            }))}
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input
-                          type="email"
-                          placeholder="john@example.com"
-                          value={qrData.metadata?.email || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            metadata: { ...prev.metadata, email: e.target.value }
-                          }))}
-                        />
+                    </div>
+
+                    {/* Digital Contact */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-primary">Digital Contact</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            placeholder="john@company.com"
+                            value={qrData.metadata?.email || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, email: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div>
+                          <Label>Website</Label>
+                          <Input
+                            type="url"
+                            placeholder="https://johndoe.com"
+                            value={qrData.metadata?.website || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, website: e.target.value }
+                            }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Address Information */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-secondary">Address Information</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Location (Google Map Link or Address)</Label>
+                          <Input
+                            placeholder="https://maps.google.com/... or 123 Main St"
+                            value={qrData.metadata?.location || ''}
+                            onChange={(e) => setQrData(prev => ({ 
+                              ...prev, 
+                              metadata: { ...prev.metadata, location: e.target.value }
+                            }))}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <Label>Street</Label>
+                            <Input
+                              placeholder="123 Main Street, Apt 4B"
+                              value={qrData.metadata?.street || ''}
+                              onChange={(e) => setQrData(prev => ({ 
+                                ...prev, 
+                                metadata: { ...prev.metadata, street: e.target.value }
+                              }))}
+                            />
+                          </div>
+                          <div>
+                            <Label>City</Label>
+                            <Input
+                              placeholder="New York"
+                              value={qrData.metadata?.city || ''}
+                              onChange={(e) => setQrData(prev => ({ 
+                                ...prev, 
+                                metadata: { ...prev.metadata, city: e.target.value }
+                              }))}
+                            />
+                          </div>
+                          <div>
+                            <Label>Zipcode</Label>
+                            <Input
+                              placeholder="10001"
+                              value={qrData.metadata?.zipcode || ''}
+                              onChange={(e) => setQrData(prev => ({ 
+                                ...prev, 
+                                metadata: { ...prev.metadata, zipcode: e.target.value }
+                              }))}
+                            />
+                          </div>
+                          <div>
+                            <Label>State</Label>
+                            <Input
+                              placeholder="New York"
+                              value={qrData.metadata?.state || ''}
+                              onChange={(e) => setQrData(prev => ({ 
+                                ...prev, 
+                                metadata: { ...prev.metadata, state: e.target.value }
+                              }))}
+                            />
+                          </div>
+                          <div>
+                            <Label>Country</Label>
+                            <Input
+                              placeholder="United States"
+                              value={qrData.metadata?.country || ''}
+                              onChange={(e) => setQrData(prev => ({ 
+                                ...prev, 
+                                metadata: { ...prev.metadata, country: e.target.value }
+                              }))}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </TabsContent>
@@ -463,7 +670,7 @@ END:VCARD`;
             </Card>
 
             {/* Style Customization */}
-            <Card className="glass-card">
+            <Card className="glass-card glass-intense">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Palette className="w-5 h-5 text-secondary" />
