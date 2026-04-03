@@ -235,27 +235,33 @@ const QRGenerator: React.FC = () => {
       <div className="w-full md:w-[450px] lg:w-[500px] flex-1 md:flex-none md:h-full flex flex-col border-t md:border-t-0 md:border-r border-border bg-card/30 backdrop-blur-xl z-20 shrink-0 md:shadow-2xl overflow-hidden">
 
         {/* Editor Header */}
-        <div className="h-16 px-6 flex items-center justify-between border-b border-border bg-card shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-xl shadow-sm">
-              <QrCode className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-sm tracking-tight leading-none mb-1">Scan Me Baby</span>
-              <span className="text-[10px] text-muted-foreground font-medium leading-none">
-                Developed by{' '}
-                <a 
-                  href="https://dilanakash.vercel.app/" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="text-primary hover:underline transition-all font-semibold"
-                >
-                  Dilan Akash
-                </a>
-              </span>
-            </div>
+        <div className="h-auto min-h-[4.5rem] py-3 px-6 flex items-center justify-between border-b border-border bg-card shrink-0">
+          
+          <div className="flex items-center">
+            <img src="/black.png" alt="Scan Me Baby Logo" className="h-12 md:h-16 w-auto object-left object-contain block dark:hidden" />
+            <img src="/white.png" alt="Scan Me Baby Logo" className="h-12 md:h-16 w-auto object-left object-contain hidden dark:block" />
           </div>
-          <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
+
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] text-muted-foreground font-semibold leading-tight uppercase tracking-wider">
+                Developed by
+              </span>
+              <a
+                href="https://dilanakash.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-primary hover:underline transition-all font-bold tracking-tight"
+              >
+                Dilan Akash
+              </a>
+            </div>
+            
+            <div className="h-8 w-px bg-border/60 hidden sm:block" />
+            
+            <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
+          </div>
+
         </div>
 
         {/* Editor Scrollable Content */}
