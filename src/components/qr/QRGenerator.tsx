@@ -54,7 +54,7 @@ interface QRData {
 const QRGenerator: React.FC = () => {
   const [qrData, setQrData] = useState<QRData>({
     type: 'url',
-    content: 'https://aurora-studio.com'
+    content: 'https://dilanakash.vercel.app/'
   });
 
   const [qrConfig, setQrConfig] = useState<QRConfig>({
@@ -236,11 +236,24 @@ const QRGenerator: React.FC = () => {
 
         {/* Editor Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-border bg-card shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
-              <QrCode className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-xl shadow-sm">
+              <QrCode className="w-5 h-5" />
             </div>
-            <span className="font-semibold text-sm tracking-tight">Scan Me Baby</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-sm tracking-tight leading-none mb-1">Scan Me Baby</span>
+              <span className="text-[10px] text-muted-foreground font-medium leading-none">
+                Developed by{' '}
+                <a 
+                  href="https://dilanakash.vercel.app/" 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-primary hover:underline transition-all font-semibold"
+                >
+                  Dilan Akash
+                </a>
+              </span>
+            </div>
           </div>
           <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
         </div>
@@ -473,8 +486,8 @@ const QRGenerator: React.FC = () => {
             <div className="space-y-5">
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Foreground Shape</Label>
+                <div className="col-span-2 space-y-2">
+                  <Label className="text-xs">Foreground Pattern Shape</Label>
                   <Select value={qrConfig.dotsType} onValueChange={(val: any) => setQrConfig({ ...qrConfig, dotsType: val })}>
                     <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -487,14 +500,24 @@ const QRGenerator: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Corner Eye Shape</Label>
+                <div className="col-span-1 space-y-2">
+                  <Label className="text-xs">Corner Frame Shape</Label>
                   <Select value={qrConfig.cornersSquareType} onValueChange={(val: any) => setQrConfig({ ...qrConfig, cornersSquareType: val })}>
                     <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="square">Square</SelectItem>
                       <SelectItem value="extra-rounded">Rounded Inner</SelectItem>
                       <SelectItem value="dot">Dot Focus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-1 space-y-2">
+                  <Label className="text-xs">Corner Dot Shape</Label>
+                  <Select value={qrConfig.cornersDotType} onValueChange={(val: any) => setQrConfig({ ...qrConfig, cornersDotType: val })}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="square">Square</SelectItem>
+                      <SelectItem value="dot">Dot</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
