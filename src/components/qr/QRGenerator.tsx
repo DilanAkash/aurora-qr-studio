@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import QRCode from 'qrcode';
+import QRCodeStyling from 'qr-code-styling';
 import { HexColorPicker } from 'react-colorful';
 import { 
   Download, 
   Share2, 
   Copy, 
   Palette, 
-  Settings, 
   Type, 
   Link2, 
   User, 
@@ -15,116 +14,97 @@ import {
   Mail, 
   Phone,
   MessageCircle,
+  QrCode,
   Sparkles,
   Upload,
-  RotateCcw
+  XCircle,
+  Paintbrush
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import ThemeToggle from '@/components/ui/theme-toggle';
 
 interface QRConfig {
   foregroundColor: string;
+  gradientColor?: string;
   backgroundColor: string;
   errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H';
   margin: number;
   width: number;
-  logo?: string;
-  logoSize: number;
-  gradientType: 'none' | 'linear' | 'radial';
-  gradientColors: string[];
+  
+  dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+  cornersSquareType: 'dot' | 'square' | 'extra-rounded';
+  cornersDotType: 'dot' | 'square';
+  
+  logoImage?: string;
 }
 
 interface QRData {
   type: 'text' | 'url' | 'contact' | 'wifi' | 'email' | 'phone' | 'sms' | 'whatsapp';
   content: string;
-  metadata?: {
-    // Contact fields
-    firstName?: string;
-    lastName?: string;
-    organization?: string;
-    position?: string;
-    phoneWork?: string;
-    phonePrivate?: string;
-    phoneMobile?: string;
-    faxWork?: string;
-    faxPrivate?: string;
-    email?: string;
-    website?: string;
-    location?: string;
-    street?: string;
-    zipcode?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    // Other fields
-    name?: string;
-    phone?: string;
-    ssid?: string;
-    password?: string;
-    encryption?: string;
-    subject?: string;
-    body?: string;
-  };
+  metadata?: any;
 }
 
 const QRGenerator: React.FC = () => {
   const [qrData, setQrData] = useState<QRData>({
-    type: 'text',
-    content: 'Hello, World! 👋'
+    type: 'url',
+    content: 'https://aurora-studio.com'
   });
   
   const [qrConfig, setQrConfig] = useState<QRConfig>({
-    foregroundColor: '#8B5CF6',
+    foregroundColor: '#000000',
+    gradientColor: undefined,
     backgroundColor: '#ffffff',
-    errorCorrectionLevel: 'M',
-    margin: 4,
-    width: 400,
-    logoSize: 0.2,
-    gradientType: 'none',
-    gradientColors: ['#8B5CF6', '#06B6D4']
+    errorCorrectionLevel: 'H',
+    margin: 5,
+    width: 1000,
+    dotsType: 'square',
+    cornersSquareType: 'square',
+    cornersDotType: 'square',
+    logoImage: undefined
   });
 
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
-  const [showColorPicker, setShowColorPicker] = useState<'fg' | 'bg' | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const qrCodeInst = useRef<any>(null);
 
-  // Generate QR code
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !qrCodeInst.current) {
+      qrCodeInst.current = new QRCodeStyling({
+        width: 1000,
+        height: 1000,
+        type: "canvas",
+        imageOptions: {
+          crossOrigin: "anonymous",
+          margin: 10,
+          imageSize: 0.4
+        }
+      });
+    }
+  }, []);
+
   const generateQRCode = async () => {
-    if (!qrData.content.trim()) return;
+    if (!qrData.content.trim() || !qrCodeInst.current) {
+      setQrCodeDataURL('');
+      return;
+    }
     
     setIsGenerating(true);
     
     try {
       let content = qrData.content;
       
-      // Format content based on type
       switch (qrData.type) {
         case 'contact':
           const meta = qrData.metadata;
           const fullName = `${meta?.firstName || ''} ${meta?.lastName || ''}`.trim();
-          content = `BEGIN:VCARD
-VERSION:3.0
-FN:${fullName}
-N:${meta?.lastName || ''};${meta?.firstName || ''};;;
-ORG:${meta?.organization || ''}
-TITLE:${meta?.position || ''}
-TEL;TYPE=WORK:${meta?.phoneWork || ''}
-TEL;TYPE=CELL:${meta?.phoneMobile || ''}
-EMAIL:${meta?.email || ''}
-URL:${meta?.website || ''}
-ADR;TYPE=WORK:;;;;;;;${meta?.country || ''}
-NOTE:${meta?.location || ''}
-END:VCARD`;
+          content = `BEGIN:VCARD\nVERSION:3.0\nFN:${fullName}\nN:${meta?.lastName || ''};${meta?.firstName || ''};;;\nORG:${meta?.organization || ''}\nTITLE:${meta?.position || ''}\nTEL;TYPE=WORK:${meta?.phoneWork || ''}\nTEL;TYPE=CELL:${meta?.phoneMobile || ''}\nEMAIL:${meta?.email || ''}\nURL:${meta?.website || ''}\nADR;TYPE=WORK:;;;;;;;${meta?.country || ''}\nNOTE:${meta?.location || ''}\nEND:VCARD`;
           break;
         case 'wifi':
           content = `WIFI:T:${qrData.metadata?.encryption || 'WPA'};S:${qrData.metadata?.ssid || ''};P:${qrData.metadata?.password || ''};H:false;;`;
@@ -147,686 +127,514 @@ END:VCARD`;
           break;
       }
 
-      const dataURL = await QRCode.toDataURL(content, {
-        errorCorrectionLevel: qrConfig.errorCorrectionLevel,
+      qrCodeInst.current.update({
+        data: content,
         margin: qrConfig.margin,
-        width: qrConfig.width,
-        color: {
-          dark: qrConfig.foregroundColor,
-          light: qrConfig.backgroundColor
-        }
+        qrOptions: {
+          errorCorrectionLevel: qrConfig.errorCorrectionLevel
+        },
+        dotsOptions: {
+          type: qrConfig.dotsType,
+          color: qrConfig.foregroundColor,
+          gradient: qrConfig.gradientColor ? {
+            type: 'linear',
+            rotation: Math.PI / 4,
+            colorStops: [
+              { offset: 0, color: qrConfig.foregroundColor },
+              { offset: 1, color: qrConfig.gradientColor }
+            ]
+          } : undefined
+        },
+        backgroundOptions: {
+          color: qrConfig.backgroundColor === '#00000000' ? '#ffffff' : qrConfig.backgroundColor
+        },
+        cornersSquareOptions: {
+          type: qrConfig.cornersSquareType,
+          color: qrConfig.gradientColor ? undefined : qrConfig.foregroundColor // Gradient overrides square colors if not tricky, usually we let it inherit
+        },
+        cornersDotOptions: {
+          type: qrConfig.cornersDotType,
+          color: qrConfig.gradientColor ? undefined : qrConfig.foregroundColor
+        },
+        image: qrConfig.logoImage || undefined
       });
 
-      setQrCodeDataURL(dataURL);
-      
-      // Show success animation
-      toast({
-        title: "QR Code Generated! ✨",
-        description: "Your beautiful QR code is ready to download or share.",
-      });
-      
+      const blob = await qrCodeInst.current.getRawData("png");
+      if (blob) {
+         setQrCodeDataURL(URL.createObjectURL(blob));
+      }
+
     } catch (error) {
-      toast({
-        title: "Generation Failed",
-        description: "There was an error generating your QR code. Please try again.",
-        variant: "destructive"
-      });
+      toast({ title: "Failed to generate QR", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Auto-generate when data changes
   useEffect(() => {
-    if (qrData.content.trim()) {
-      const debounce = setTimeout(generateQRCode, 300);
-      return () => clearTimeout(debounce);
-    }
+    const debounce = setTimeout(generateQRCode, 200);
+    return () => clearTimeout(debounce);
   }, [qrData, qrConfig]);
 
-  // Download QR code
   const downloadQRCode = () => {
     if (!qrCodeDataURL) return;
-    
     const link = document.createElement('a');
     link.download = `qr-code-${Date.now()}.png`;
     link.href = qrCodeDataURL;
     link.click();
-    
-    toast({
-      title: "Download Started! 📥",
-      description: "Your QR code is being downloaded.",
-    });
+    toast({ title: "Exported successfully", description: "Downloaded as High-Res PNG" });
   };
 
-  // Share QR code
-  const shareQRCode = async () => {
-    if (!qrCodeDataURL) return;
-    
+  const copyData = async () => {
     try {
-      if (navigator.share) {
-        const response = await fetch(qrCodeDataURL);
-        const blob = await response.blob();
-        const file = new File([blob], 'qr-code.png', { type: 'image/png' });
-        
-        await navigator.share({
-          title: 'My QR Code',
-          files: [file]
-        });
-      } else {
-        // Fallback to copy
-        await navigator.clipboard.writeText(qrCodeDataURL);
-        toast({
-          title: "Copied to Clipboard! 📋",
-          description: "QR code data URL copied to clipboard.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Share Failed",
-        description: "Unable to share QR code. Please try downloading instead.",
-        variant: "destructive"
-      });
+      await navigator.clipboard.writeText(qrData.content);
+      toast({ title: "Copied!", description: "Content copied to clipboard" });
+    } catch (e) {}
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+       const url = URL.createObjectURL(file);
+       setQrConfig({ ...qrConfig, logoImage: url });
     }
   };
 
-  // Copy QR code
-  const copyQRCode = async () => {
-    if (!qrCodeDataURL) return;
-    
-    try {
-      // Get the formatted content for better copy experience
-      let copyContent = qrData.content;
-      
-      if (qrData.type === 'contact') {
-        const meta = qrData.metadata;
-        const fullName = `${meta?.firstName || ''} ${meta?.lastName || ''}`.trim();
-        copyContent = `Contact: ${fullName}${meta?.organization ? `\nOrganization: ${meta.organization}` : ''}${meta?.position ? `\nPosition: ${meta.position}` : ''}${meta?.phoneWork ? `\nWork Phone: ${meta.phoneWork}` : ''}${meta?.phoneMobile ? `\nMobile: ${meta.phoneMobile}` : ''}${meta?.email ? `\nEmail: ${meta.email}` : ''}${meta?.website ? `\nWebsite: ${meta.website}` : ''}${meta?.location ? `\nLocation: ${meta.location}` : ''}${meta?.country ? `\nCountry: ${meta.country}` : ''}`;
-      }
-      
-      await navigator.clipboard.writeText(copyContent);
-      toast({
-        title: "Copied! 📋",
-        description: "QR code content copied to clipboard.",
-      });
-    } catch (error) {
-      toast({
-        title: "Copy Failed",
-        description: "Unable to copy QR code content.",
-        variant: "destructive"
-      });
+  const applyPreset = (preset: 'minimal' | 'cyber' | 'soft' | 'organic') => {
+    switch(preset) {
+      case 'minimal':
+        setQrConfig({ ...qrConfig, foregroundColor: '#000000', gradientColor: undefined, backgroundColor: '#ffffff', dotsType: 'square', cornersSquareType: 'square', cornersDotType: 'square' });
+        break;
+      case 'cyber':
+        setQrConfig({ ...qrConfig, foregroundColor: '#f12711', gradientColor: '#f5af19', backgroundColor: '#09090b', dotsType: 'classy', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
+        break;
+      case 'soft':
+        setQrConfig({ ...qrConfig, foregroundColor: '#5B86E5', gradientColor: '#36D1DC', backgroundColor: '#ffffff', dotsType: 'rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
+        break;
+      case 'organic':
+        setQrConfig({ ...qrConfig, foregroundColor: '#11998e', gradientColor: '#38ef7d', backgroundColor: '#ffffff', dotsType: 'extra-rounded', cornersSquareType: 'dot', cornersDotType: 'dot' });
+        break;
     }
   };
 
-  const dataTypeIcons = {
-    text: Type,
-    url: Link2,
-    contact: User,
-    wifi: Wifi,
-    email: Mail,
-    phone: Phone,
-    sms: Phone,
-    whatsapp: MessageCircle
-  };
+  const types = [
+    { id: 'url', icon: Link2, label: 'URL' },
+    { id: 'text', icon: Type, label: 'Text' },
+    { id: 'whatsapp', icon: MessageCircle, label: 'WhatsApp' },
+    { id: 'wifi', icon: Wifi, label: 'Wi-Fi' },
+    { id: 'contact', icon: User, label: 'vCard' },
+    { id: 'email', icon: Mail, label: 'Email' },
+    { id: 'phone', icon: Phone, label: 'Call' },
+    { id: 'sms', icon: MessageCircle, label: 'SMS' },
+  ] as const;
 
   return (
-    <div className="min-h-screen bg-gradient-bg p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <h1 className="text-4xl lg:text-6xl font-bold gradient-text mb-4">
-            Scan Me Baby
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            It scans, it burns, it sizzles. Like your last relationship. 
-          </p>
-        </motion.div>
+    <div className="flex flex-col-reverse md:flex-row h-[100dvh] w-full bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
+      
+      {/* LEFT PANEL : EDITOR */}
+      <div className="w-full md:w-[450px] lg:w-[500px] flex-1 md:flex-none md:h-full flex flex-col border-t md:border-t-0 md:border-r border-border bg-card/30 backdrop-blur-xl z-20 shrink-0 md:shadow-2xl overflow-hidden">
+        
+        {/* Editor Header */}
+        <div className="h-16 px-6 flex items-center justify-between border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary text-primary-foreground p-1.5 rounded-md">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-sm tracking-tight">Scan Me Baby</span>
+          </div>
+          <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
+        </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Controls Panel */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 space-y-6"
-          >
-            {/* Data Input */}
-            <Card className="glass-card glass-intense">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  Content & Data Type
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Tabs value={qrData.type} onValueChange={(value) => setQrData(prev => ({ ...prev, type: value as any, content: '' }))}>
-                  <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-                    {Object.entries(dataTypeIcons).map(([type, Icon]) => (
-                      <TabsTrigger key={type} value={type} className="flex items-center gap-1">
-                        <Icon className="w-4 h-4" />
-                        <span className="hidden sm:inline capitalize">{type}</span>
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
+        {/* Editor Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-8 space-y-10 custom-scrollbar">
+           
+          {/* Section 1: Type Selection */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Format</Label>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {types.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setQrData({ type: t.id, content: '', metadata: {} })}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1.5 h-16 rounded-xl border transition-all text-xs font-medium",
+                    qrData.type === t.id
+                      ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                      : "bg-transparent border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <t.icon className="w-4 h-4" />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </section>
 
-                  <TabsContent value="text" className="space-y-4">
-                    <div>
-                      <Label htmlFor="text-content">Text Content</Label>
-                      <Textarea
-                        id="text-content"
-                        placeholder="Enter your text here..."
-                        value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
-                        className="min-h-[100px]"
-                      />
-                    </div>
-                  </TabsContent>
+          <div className="h-px w-full bg-border" />
 
-                  <TabsContent value="url" className="space-y-4">
-                    <div>
-                      <Label htmlFor="url-content">Website URL</Label>
+          {/* Section 2: Data Inputs */}
+          <section>
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4 block">Payload Data</Label>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={qrData.type}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-4"
+              >
+                {/* URL */}
+                {qrData.type === 'url' && (
+                  <div className="space-y-2">
+                    <Label className="text-sm">URL Destination</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://"
+                      value={qrData.content}
+                      onChange={(e) => setQrData({ ...qrData, content: e.target.value })}
+                      className="h-10 rounded-lg shadow-sm"
+                    />
+                  </div>
+                )}
+
+                {/* Text */}
+                {qrData.type === 'text' && (
+                  <div className="space-y-2">
+                    <Label className="text-sm">Content</Label>
+                    <Textarea
+                      placeholder="Plain text goes here..."
+                      value={qrData.content}
+                      onChange={(e) => setQrData({ ...qrData, content: e.target.value })}
+                      className="min-h-[120px] rounded-lg shadow-sm resize-none"
+                    />
+                  </div>
+                )}
+
+                {/* WhatsApp */}
+                {qrData.type === 'whatsapp' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Phone Number</Label>
                       <Input
-                        id="url-content"
-                        type="url"
-                        placeholder="https://example.com"
+                        type="tel"
+                        placeholder="With country code..."
                         value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
+                        onChange={(e) => setQrData({ ...qrData, content: e.target.value })}
+                        className="h-10 rounded-lg shadow-sm"
                       />
                     </div>
-                  </TabsContent>
-
-                  <TabsContent value="contact" className="space-y-6">
-                    {/* Personal Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-primary">Personal Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>First Name</Label>
-                          <Input
-                            placeholder="John"
-                            value={qrData.metadata?.firstName || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              content: `${e.target.value} ${prev.metadata?.lastName || ''}`.trim(),
-                              metadata: { ...prev.metadata, firstName: e.target.value }
-                            }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Last Name</Label>
-                          <Input
-                            placeholder="Doe"
-                            value={qrData.metadata?.lastName || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              content: `${prev.metadata?.firstName || ''} ${e.target.value}`.trim(),
-                              metadata: { ...prev.metadata, lastName: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Pre-filled Message</Label>
+                      <Textarea
+                        placeholder="Optional message..."
+                        value={qrData.metadata?.body || ''}
+                        onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, body: e.target.value } })}
+                        className="min-h-[80px] rounded-lg shadow-sm resize-none"
+                      />
                     </div>
+                  </>
+                )}
 
-                    {/* Professional Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-secondary">Professional Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Organization</Label>
-                          <Input
-                            placeholder="Company Inc."
-                            value={qrData.metadata?.organization || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, organization: e.target.value }
-                            }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Position (Work)</Label>
-                          <Input
-                            placeholder="Software Engineer"
-                            value={qrData.metadata?.position || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, position: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      </div>
+                {/* Wi-Fi */}
+                {qrData.type === 'wifi' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm">SSID (Network Name)</Label>
+                      <Input
+                        value={qrData.metadata?.ssid || ''}
+                        onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, ssid: e.target.value }, content: e.target.value })}
+                        className="h-10 rounded-lg shadow-sm"
+                      />
                     </div>
-
-                    {/* Contact Numbers */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-accent">Contact Numbers</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Phone (Work)</Label>
-                          <Input
-                            placeholder="+1 (555) 123-4567"
-                            value={qrData.metadata?.phoneWork || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, phoneWork: e.target.value }
-                            }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Phone (Mobile)</Label>
-                          <Input
-                            placeholder="+1 (555) 123-4567"
-                            value={qrData.metadata?.phoneMobile || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, phoneMobile: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Password</Label>
+                      <Input
+                        type="password"
+                        value={qrData.metadata?.password || ''}
+                        onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, password: e.target.value } })}
+                        className="h-10 rounded-lg shadow-sm"
+                      />
                     </div>
-
-                    {/* Digital Contact */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-primary">Digital Contact</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Email</Label>
-                          <Input
-                            type="email"
-                            placeholder="john@company.com"
-                            value={qrData.metadata?.email || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, email: e.target.value }
-                            }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Website</Label>
-                          <Input
-                            type="url"
-                            placeholder="https://johndoe.com"
-                            value={qrData.metadata?.website || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, website: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Encryption</Label>
+                      <Select value={qrData.metadata?.encryption || 'WPA'} onValueChange={(val) => setQrData({ ...qrData, metadata: { ...qrData.metadata, encryption: val } })}>
+                        <SelectTrigger className="h-10 rounded-lg shadow-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="WPA">WPA/WPA2</SelectItem><SelectItem value="WEP">WEP</SelectItem><SelectItem value="nopass">None</SelectItem></SelectContent>
+                      </Select>
                     </div>
+                  </div>
+                )}
 
-                    {/* Address Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-secondary">Address Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <Label>Location (Google Map Link or Address)</Label>
-                          <Input
-                            placeholder="https://maps.google.com/... or 123 Main St"
-                            value={qrData.metadata?.location || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, location: e.target.value }
-                            }))}
-                          />
-                        </div>
-                        <div>
-                          <Label>Country</Label>
-                          <Input
-                            placeholder="United States"
-                            value={qrData.metadata?.country || ''}
-                            onChange={(e) => setQrData(prev => ({ 
-                              ...prev, 
-                              metadata: { ...prev.metadata, country: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="wifi" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Network Name (SSID)</Label>
-                        <Input
-                          placeholder="MyWiFiNetwork"
-                          value={qrData.metadata?.ssid || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            content: e.target.value,
-                            metadata: { ...prev.metadata, ssid: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div>
-                        <Label>Password</Label>
-                        <Input
-                          type="password"
-                          placeholder="Enter WiFi password"
-                          value={qrData.metadata?.password || ''}
-                          onChange={(e) => setQrData(prev => ({ 
-                            ...prev, 
-                            metadata: { ...prev.metadata, password: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <Label>Security Type</Label>
-                        <Select value={qrData.metadata?.encryption || 'WPA'} onValueChange={(value) => 
-                          setQrData(prev => ({ ...prev, metadata: { ...prev.metadata, encryption: value }}))
-                        }>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="WPA">WPA/WPA2</SelectItem>
-                            <SelectItem value="WEP">WEP</SelectItem>
-                            <SelectItem value="nopass">Open (No Password)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="email" className="space-y-4">
-                    <div>
-                      <Label>Email Address</Label>
+                {/* Email */}
+                {qrData.type === 'email' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm">To</Label>
                       <Input
                         type="email"
-                        placeholder="recipient@example.com"
                         value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
+                        onChange={(e) => setQrData({ ...qrData, content: e.target.value })}
+                        className="h-10 rounded-lg shadow-sm"
                       />
                     </div>
-                    <div>
-                      <Label>Subject (Optional)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Subject</Label>
                       <Input
-                        placeholder="Email subject"
                         value={qrData.metadata?.subject || ''}
-                        onChange={(e) => setQrData(prev => ({ 
-                          ...prev, 
-                          metadata: { ...prev.metadata, subject: e.target.value }
-                        }))}
+                        onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, subject: e.target.value } })}
+                        className="h-10 rounded-lg shadow-sm"
                       />
                     </div>
-                    <div>
-                      <Label>Message (Optional)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Body</Label>
                       <Textarea
-                        placeholder="Email message..."
                         value={qrData.metadata?.body || ''}
-                        onChange={(e) => setQrData(prev => ({ 
-                          ...prev, 
-                          metadata: { ...prev.metadata, body: e.target.value }
-                        }))}
+                        onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, body: e.target.value } })}
+                        className="min-h-[100px] rounded-lg shadow-sm resize-none"
                       />
                     </div>
-                  </TabsContent>
-
-                  <TabsContent value="phone" className="space-y-4">
-                    <div>
-                      <Label>Phone Number</Label>
-                      <Input
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="sms" className="space-y-4">
-                    <div>
-                      <Label>Phone Number</Label>
-                      <Input
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Message (Optional)</Label>
-                      <Textarea
-                        placeholder="SMS message..."
-                        value={qrData.metadata?.body || ''}
-                        onChange={(e) => setQrData(prev => ({ 
-                          ...prev, 
-                          metadata: { ...prev.metadata, body: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="whatsapp" className="space-y-4">
-                    <div>
-                      <Label>WhatsApp Number (with country code)</Label>
-                      <Input
-                        type="tel"
-                        placeholder="e.g. 15551234567"
-                        value={qrData.content}
-                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label>Custom Message (Optional)</Label>
-                      <Textarea
-                        placeholder="Hi, I'm interested in your services..."
-                        value={qrData.metadata?.body || ''}
-                        onChange={(e) => setQrData(prev => ({ 
-                          ...prev, 
-                          metadata: { ...prev.metadata, body: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* Style Customization */}
-            <Card className="glass-card glass-intense">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-secondary" />
-                  Style & Appearance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Colors */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="mb-2 block">Foreground Color</Label>
-                    <Popover open={showColorPicker === 'fg'} onOpenChange={(open) => setShowColorPicker(open ? 'fg' : null)}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full border"
-                            style={{ backgroundColor: qrConfig.foregroundColor }}
-                          />
-                          {qrConfig.foregroundColor}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <HexColorPicker 
-                          color={qrConfig.foregroundColor} 
-                          onChange={(color) => setQrConfig(prev => ({ ...prev, foregroundColor: color }))}
-                        />
-                      </PopoverContent>
-                    </Popover>
                   </div>
-                  
-                  <div>
-                    <Label className="mb-2 block">Background Color</Label>
-                    <Popover open={showColorPicker === 'bg'} onOpenChange={(open) => setShowColorPicker(open ? 'bg' : null)}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full border"
-                            style={{ backgroundColor: qrConfig.backgroundColor }}
-                          />
-                          {qrConfig.backgroundColor}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <HexColorPicker 
-                          color={qrConfig.backgroundColor} 
-                          onChange={(color) => setQrConfig(prev => ({ ...prev, backgroundColor: color }))}
+                )}
+
+                {/* Phone & SMS */}
+                {(qrData.type === 'sms' || qrData.type === 'phone') && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Phone</Label>
+                      <Input
+                        type="tel"
+                        value={qrData.content}
+                        onChange={(e) => setQrData({ ...qrData, content: e.target.value })}
+                        className="h-10 rounded-lg shadow-sm"
+                      />
+                    </div>
+                    {qrData.type === 'sms' && (
+                      <div className="space-y-2">
+                        <Label className="text-sm">Message</Label>
+                        <Textarea
+                          value={qrData.metadata?.body || ''}
+                          onChange={(e) => setQrData({ ...qrData, metadata: { ...qrData.metadata, body: e.target.value } })}
+                          className="min-h-[80px] rounded-lg shadow-sm resize-none"
                         />
-                      </PopoverContent>
-                    </Popover>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
-                <Separator />
+                {/* Contact (vCard) */}
+                {qrData.type === 'contact' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-1 space-y-2">
+                      <Label className="text-sm">First Name</Label>
+                      <Input value={qrData.metadata?.firstName || ''} onChange={(e) => setQrData({ ...qrData, content: 'contact', metadata: { ...qrData.metadata, firstName: e.target.value } })} className="h-10 rounded-lg shadow-sm" />
+                    </div>
+                    <div className="col-span-1 space-y-2">
+                      <Label className="text-sm">Last Name</Label>
+                      <Input value={qrData.metadata?.lastName || ''} onChange={(e) => setQrData({ ...qrData, content: 'contact', metadata: { ...qrData.metadata, lastName: e.target.value } })} className="h-10 rounded-lg shadow-sm" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label className="text-sm">Organization</Label>
+                      <Input value={qrData.metadata?.organization || ''} onChange={(e) => setQrData({ ...qrData, content: 'contact', metadata: { ...qrData.metadata, organization: e.target.value } })} className="h-10 rounded-lg shadow-sm" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label className="text-sm">Mobile</Label>
+                      <Input value={qrData.metadata?.phoneMobile || ''} onChange={(e) => setQrData({ ...qrData, content: 'contact', metadata: { ...qrData.metadata, phoneMobile: e.target.value } })} className="h-10 rounded-lg shadow-sm" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label className="text-sm">Email</Label>
+                      <Input type="email" value={qrData.metadata?.email || ''} onChange={(e) => setQrData({ ...qrData, content: 'contact', metadata: { ...qrData.metadata, email: e.target.value } })} className="h-10 rounded-lg shadow-sm" />
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </section>
 
-                {/* Settings */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Error Correction</Label>
-                    <Select value={qrConfig.errorCorrectionLevel} onValueChange={(value: any) => 
-                      setQrConfig(prev => ({ ...prev, errorCorrectionLevel: value }))
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+          <div className="h-px w-full bg-border" /> {/* Divider */}
+
+          {/* Section 3: Professional Appearance Customizer */}
+          <section className="bg-muted/30 p-5 rounded-2xl border border-border">
+            <div className="flex items-center gap-2 mb-4">
+               <Paintbrush className="w-4 h-4 text-muted-foreground" />
+               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block">Pro Customizer</Label>
+            </div>
+
+            {/* Presets */}
+            <div className="grid grid-cols-4 gap-2 mb-6">
+               <Button variant="outline" size="sm" className="text-xs" onClick={()=>applyPreset('minimal')}>Minimal</Button>
+               <Button variant="outline" size="sm" className="text-xs border-orange-500/50 text-orange-600 dark:text-orange-400" onClick={()=>applyPreset('cyber')}>Cyber</Button>
+               <Button variant="outline" size="sm" className="text-xs border-blue-400/50 text-blue-500" onClick={()=>applyPreset('soft')}>Soft</Button>
+               <Button variant="outline" size="sm" className="text-xs border-green-500/50 text-green-600" onClick={()=>applyPreset('organic')}>Organic</Button>
+            </div>
+            
+            <div className="space-y-5">
+              
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label className="text-xs">Foreground Shape</Label>
+                    <Select value={qrConfig.dotsType} onValueChange={(val: any) => setQrConfig({...qrConfig, dotsType: val})}>
+                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="L">Low (7%)</SelectItem>
-                        <SelectItem value="M">Medium (15%)</SelectItem>
-                        <SelectItem value="Q">Quartile (25%)</SelectItem>
-                        <SelectItem value="H">High (30%)</SelectItem>
+                        <SelectItem value="square">Standard Square</SelectItem>
+                        <SelectItem value="rounded">Rounded</SelectItem>
+                        <SelectItem value="dots">Dots</SelectItem>
+                        <SelectItem value="classy">Classy</SelectItem>
+                        <SelectItem value="classy-rounded">Classy Rounded</SelectItem>
+                        <SelectItem value="extra-rounded">Liquid Rounded</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  
-                  <div>
-                    <Label>Size (pixels)</Label>
-                    <Input
-                      type="number"
-                      min="200"
-                      max="1000"
-                      value={qrConfig.width}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, width: parseInt(e.target.value) || 400 }))}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Margin</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={qrConfig.margin}
-                      onChange={(e) => setQrConfig(prev => ({ ...prev, margin: parseInt(e.target.value) || 4 }))}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                 </div>
+                 <div className="space-y-2">
+                    <Label className="text-xs">Corner Eye Shape</Label>
+                    <Select value={qrConfig.cornersSquareType} onValueChange={(val: any) => setQrConfig({...qrConfig, cornersSquareType: val})}>
+                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="square">Square</SelectItem>
+                        <SelectItem value="extra-rounded">Rounded Inner</SelectItem>
+                        <SelectItem value="dot">Dot Focus</SelectItem>
+                      </SelectContent>
+                    </Select>
+                 </div>
+              </div>
 
-          {/* QR Code Preview */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
-          >
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-accent" />
-                    Live Preview
-                  </span>
-                  {isGenerating && (
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative">
-                  <AnimatePresence mode="wait">
-                    {qrCodeDataURL ? (
-                      <motion.div
-                        key="qr-code"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="text-center"
-                      >
-                        <div className="relative inline-block p-4 glass rounded-2xl">
-                          <img 
-                            src={qrCodeDataURL} 
-                            alt="Generated QR Code"
-                            className="max-w-full h-auto rounded-lg shadow-2xl"
-                            style={{ maxWidth: '300px' }}
-                          />
-                        </div>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="placeholder"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-center py-16"
-                      >
-                        <div className="w-32 h-32 mx-auto mb-4 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center">
-                          <Type className="w-8 h-8 text-muted-foreground/50" />
-                        </div>
-                        <p className="text-muted-foreground">
-                          Enter content above to see QR preview
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Action Buttons */}
-                {qrCodeDataURL && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col gap-3 mt-6"
-                  >
-                    <Button 
-                      variant="gradient" 
-                      size="lg" 
-                      onClick={downloadQRCode}
-                      className="w-full"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download PNG
+              {/* Logo Injector */}
+              <div className="space-y-2">
+                 <Label className="text-xs">Center Logo Upload</Label>
+                 <div className="flex items-center gap-2">
+                    <Button variant="outline" className="h-9 flex-1 relative overflow-hidden text-xs">
+                       <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                       <Upload className="w-3 h-3 mr-2" /> {qrConfig.logoImage ? "Replace Logo" : "Upload Logo"}
                     </Button>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline" 
-                        onClick={shareQRCode}
-                      >
-                        <Share2 className="w-4 h-4" />
-                        Share
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        onClick={copyQRCode}
-                      >
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </Button>
+                    {qrConfig.logoImage && (
+                       <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => setQrConfig({...qrConfig, logoImage: undefined})}>
+                          <XCircle className="w-4 h-4" />
+                       </Button>
+                    )}
+                 </div>
+              </div>
+
+              <div className="h-px w-full bg-border/50" />
+
+              <div className="space-y-3 pt-1">
+                 <div className="flex items-center justify-between">
+                    <Label className="text-xs">Main Color (Gradient Start)</Label>
+                    <Popover>
+                      <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
+                        <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.foregroundColor }} />
+                        {qrConfig.foregroundColor}
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 border-border z-50">
+                        <HexColorPicker color={qrConfig.foregroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, foregroundColor: clr })} />
+                      </PopoverContent>
+                    </Popover>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1">Gradient End <span className="opacity-50">(Optional)</span></Label>
+                    <div className="flex items-center gap-2">
+                       {qrConfig.gradientColor && (
+                          <XCircle className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-destructive" onClick={() => setQrConfig({...qrConfig, gradientColor: undefined})} />
+                       )}
+                       <Popover>
+                         <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
+                           <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.gradientColor || '#transparent' }} />
+                           {qrConfig.gradientColor || 'None'}
+                         </PopoverTrigger>
+                         <PopoverContent className="w-auto p-0 border-border z-50">
+                           <HexColorPicker color={qrConfig.gradientColor || '#000000'} onChange={(clr) => setQrConfig({ ...qrConfig, gradientColor: clr })} />
+                         </PopoverContent>
+                       </Popover>
                     </div>
-                  </motion.div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <Label className="text-xs">Background Color</Label>
+                    <Popover>
+                      <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
+                        <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.backgroundColor }} />
+                        {qrConfig.backgroundColor}
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 border-border z-50">
+                        <HexColorPicker color={qrConfig.backgroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, backgroundColor: clr })} />
+                      </PopoverContent>
+                    </Popover>
+                 </div>
+              </div>
+
+            </div>
+          </section>
+
         </div>
       </div>
+
+      {/* RIGHT PANEL : CANVAS (Preview) */}
+      <div className="h-[40vh] md:h-full md:flex-1 relative bg-secondary/50 flex flex-col items-center justify-center isolate overflow-hidden shrink-0">
+        
+        {/* Subtle dot grid background for the "Canvas" feel */}
+        <div
+          className="absolute inset-0 z-[-1] opacity-40 dark:opacity-20"
+          style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentcolor 1px, transparent 0)', backgroundSize: '24px 24px' }}
+        />
+
+        {/* Canvas Toolbar */}
+        <div className="absolute top-6 right-6 flex items-center gap-2 z-20">
+          <Button variant="outline" className="bg-background/80 backdrop-blur shadow-sm h-9 px-3 gap-2" onClick={copyData} disabled={!qrCodeDataURL}>
+            <Copy className="w-4 h-4" /> <span className="hidden xl:inline">Copy Data</span>
+          </Button>
+          <Button className="h-9 shadow-md gap-2" onClick={downloadQRCode} disabled={!qrCodeDataURL}>
+            <Download className="w-4 h-4" /> Export High-Res PNG
+          </Button>
+        </div>
+
+        {/* The Output Frame */}
+        <AnimatePresence mode="wait">
+          {qrCodeDataURL ? (
+            <motion.div
+              key="output"
+              initial={{ scale: 0.95, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              transition={{ duration: 0.3 }}
+              className="bg-white p-[5%] rounded-[40px] shadow-2xl shadow-black/10 transition-transform hover:scale-105 duration-300 relative group max-w-[80%] aspect-square flex items-center justify-center overflow-hidden"
+            >
+              <img src={qrCodeDataURL} alt="QR Code Canvas" className="w-[180px] h-[180px] sm:w-[250px] sm:h-[250px] md:w-[350px] md:h-[350px] lg:w-[450px] lg:h-[450px] object-contain mix-blend-multiply" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="no-data"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center text-muted-foreground/60 p-8 rounded-[40px] border-2 border-dashed border-border/50 bg-background/50 backdrop-blur w-[200px] h-[200px] md:w-[300px] md:h-[300px] lg:w-[400px] lg:h-[400px]"
+            >
+              <QrCode className="w-16 h-16 md:w-24 md:h-24 mb-4 stroke-1 opacity-50" />
+              <p className="text-xs md:text-sm font-medium tracking-tight">Configure data</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bottom Status Bar */}
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-background/80 backdrop-blur-md border-t border-border flex items-center px-6">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            {isGenerating ? 'Rendering Engine...' : 'Canvas Active & Tracking'}
+          </div>
+        </div>
+
+      </div>
+
+      <style>{`
+        /* Smooth Scrollbar for the left panel */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: hsl(var(--border));
+          border-radius: 10px;
+        }
+      `}</style>
     </div>
   );
 };

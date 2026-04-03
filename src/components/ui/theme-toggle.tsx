@@ -3,7 +3,11 @@ import { motion } from 'framer-motion';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  className?: string;
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -25,10 +29,10 @@ const ThemeToggle: React.FC = () => {
 
   return (
     <Button
-      variant="glass"
+      variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="fixed top-6 right-6 z-50"
+      className={className}
     >
       <motion.div
         key={isDark ? 'dark' : 'light'}
