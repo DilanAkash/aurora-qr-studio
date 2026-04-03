@@ -14,6 +14,7 @@ import {
   Wifi, 
   Mail, 
   Phone,
+  MessageCircle,
   Sparkles,
   Upload,
   RotateCcw
@@ -43,7 +44,7 @@ interface QRConfig {
 }
 
 interface QRData {
-  type: 'text' | 'url' | 'contact' | 'wifi' | 'email' | 'phone' | 'sms';
+  type: 'text' | 'url' | 'contact' | 'wifi' | 'email' | 'phone' | 'sms' | 'whatsapp';
   content: string;
   metadata?: {
     // Contact fields
@@ -136,6 +137,13 @@ END:VCARD`;
           break;
         case 'sms':
           content = `sms:${qrData.content}?body=${qrData.metadata?.body || ''}`;
+          break;
+        case 'whatsapp':
+          const phone = qrData.content.replace(/[^0-9]/g, '');
+          content = `https://wa.me/${phone}`;
+          if (qrData.metadata?.body) {
+            content += `?text=${encodeURIComponent(qrData.metadata.body)}`;
+          }
           break;
       }
 
@@ -257,7 +265,8 @@ END:VCARD`;
     wifi: Wifi,
     email: Mail,
     phone: Phone,
-    sms: Phone
+    sms: Phone,
+    whatsapp: MessageCircle
   };
 
   return (
@@ -270,10 +279,10 @@ END:VCARD`;
           className="text-center mb-8"
         >
           <h1 className="text-4xl lg:text-6xl font-bold gradient-text mb-4">
-            Scan Me Maybe
+            Scan Me Baby
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Create stunning, customizable QR codes with advanced styling options and instant preview
+            It scans, it burns, it sizzles. Like your last relationship. 
           </p>
         </motion.div>
 
@@ -294,7 +303,7 @@ END:VCARD`;
               </CardHeader>
               <CardContent className="space-y-4">
                 <Tabs value={qrData.type} onValueChange={(value) => setQrData(prev => ({ ...prev, type: value as any, content: '' }))}>
-                  <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
+                  <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
                     {Object.entries(dataTypeIcons).map(([type, Icon]) => (
                       <TabsTrigger key={type} value={type} className="flex items-center gap-1">
                         <Icon className="w-4 h-4" />
@@ -584,6 +593,29 @@ END:VCARD`;
                       <Label>Message (Optional)</Label>
                       <Textarea
                         placeholder="SMS message..."
+                        value={qrData.metadata?.body || ''}
+                        onChange={(e) => setQrData(prev => ({ 
+                          ...prev, 
+                          metadata: { ...prev.metadata, body: e.target.value }
+                        }))}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="whatsapp" className="space-y-4">
+                    <div>
+                      <Label>WhatsApp Number (with country code)</Label>
+                      <Input
+                        type="tel"
+                        placeholder="e.g. 15551234567"
+                        value={qrData.content}
+                        onChange={(e) => setQrData(prev => ({ ...prev, content: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Custom Message (Optional)</Label>
+                      <Textarea
+                        placeholder="Hi, I'm interested in your services..."
                         value={qrData.metadata?.body || ''}
                         onChange={(e) => setQrData(prev => ({ 
                           ...prev, 
