@@ -2,16 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCodeStyling from 'qr-code-styling';
 import { HexColorPicker } from 'react-colorful';
-import { 
-  Download, 
-  Share2, 
-  Copy, 
-  Palette, 
-  Type, 
-  Link2, 
-  User, 
-  Wifi, 
-  Mail, 
+import {
+  Download,
+  Share2,
+  Copy,
+  Palette,
+  Type,
+  Link2,
+  User,
+  Wifi,
+  Mail,
   Phone,
   MessageCircle,
   QrCode,
@@ -37,11 +37,11 @@ interface QRConfig {
   errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H';
   margin: number;
   width: number;
-  
+
   dotsType: 'rounded' | 'dots' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
   cornersSquareType: 'dot' | 'square' | 'extra-rounded';
   cornersDotType: 'dot' | 'square';
-  
+
   logoImage?: string;
 }
 
@@ -56,11 +56,11 @@ const QRGenerator: React.FC = () => {
     type: 'url',
     content: 'https://aurora-studio.com'
   });
-  
+
   const [qrConfig, setQrConfig] = useState<QRConfig>({
     foregroundColor: '#000000',
     gradientColor: undefined,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
     errorCorrectionLevel: 'H',
     margin: 5,
     width: 1000,
@@ -94,12 +94,12 @@ const QRGenerator: React.FC = () => {
       setQrCodeDataURL('');
       return;
     }
-    
+
     setIsGenerating(true);
-    
+
     try {
       let content = qrData.content;
-      
+
       switch (qrData.type) {
         case 'contact':
           const meta = qrData.metadata;
@@ -146,7 +146,7 @@ const QRGenerator: React.FC = () => {
           } : undefined
         },
         backgroundOptions: {
-          color: qrConfig.backgroundColor === '#00000000' ? '#ffffff' : qrConfig.backgroundColor
+          color: qrConfig.backgroundColor
         },
         cornersSquareOptions: {
           type: qrConfig.cornersSquareType,
@@ -161,7 +161,7 @@ const QRGenerator: React.FC = () => {
 
       const blob = await qrCodeInst.current.getRawData("png");
       if (blob) {
-         setQrCodeDataURL(URL.createObjectURL(blob));
+        setQrCodeDataURL(URL.createObjectURL(blob));
       }
 
     } catch (error) {
@@ -189,30 +189,30 @@ const QRGenerator: React.FC = () => {
     try {
       await navigator.clipboard.writeText(qrData.content);
       toast({ title: "Copied!", description: "Content copied to clipboard" });
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-       const url = URL.createObjectURL(file);
-       setQrConfig({ ...qrConfig, logoImage: url });
+      const url = URL.createObjectURL(file);
+      setQrConfig({ ...qrConfig, logoImage: url });
     }
   };
 
   const applyPreset = (preset: 'minimal' | 'cyber' | 'soft' | 'organic') => {
-    switch(preset) {
+    switch (preset) {
       case 'minimal':
-        setQrConfig({ ...qrConfig, foregroundColor: '#000000', gradientColor: undefined, backgroundColor: '#ffffff', dotsType: 'square', cornersSquareType: 'square', cornersDotType: 'square' });
+        setQrConfig({ ...qrConfig, foregroundColor: '#000000', gradientColor: undefined, backgroundColor: 'transparent', dotsType: 'square', cornersSquareType: 'square', cornersDotType: 'square' });
         break;
       case 'cyber':
-        setQrConfig({ ...qrConfig, foregroundColor: '#f12711', gradientColor: '#f5af19', backgroundColor: '#09090b', dotsType: 'classy', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
+        setQrConfig({ ...qrConfig, foregroundColor: '#f12711', gradientColor: '#f5af19', backgroundColor: 'transparent', dotsType: 'classy', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
         break;
       case 'soft':
-        setQrConfig({ ...qrConfig, foregroundColor: '#5B86E5', gradientColor: '#36D1DC', backgroundColor: '#ffffff', dotsType: 'rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
+        setQrConfig({ ...qrConfig, foregroundColor: '#5B86E5', gradientColor: '#36D1DC', backgroundColor: 'transparent', dotsType: 'rounded', cornersSquareType: 'extra-rounded', cornersDotType: 'dot' });
         break;
       case 'organic':
-        setQrConfig({ ...qrConfig, foregroundColor: '#11998e', gradientColor: '#38ef7d', backgroundColor: '#ffffff', dotsType: 'extra-rounded', cornersSquareType: 'dot', cornersDotType: 'dot' });
+        setQrConfig({ ...qrConfig, foregroundColor: '#11998e', gradientColor: '#38ef7d', backgroundColor: 'transparent', dotsType: 'extra-rounded', cornersSquareType: 'dot', cornersDotType: 'dot' });
         break;
     }
   };
@@ -230,10 +230,10 @@ const QRGenerator: React.FC = () => {
 
   return (
     <div className="flex flex-col-reverse md:flex-row h-[100dvh] w-full bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
-      
+
       {/* LEFT PANEL : EDITOR */}
       <div className="w-full md:w-[450px] lg:w-[500px] flex-1 md:flex-none md:h-full flex flex-col border-t md:border-t-0 md:border-r border-border bg-card/30 backdrop-blur-xl z-20 shrink-0 md:shadow-2xl overflow-hidden">
-        
+
         {/* Editor Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-border bg-card shrink-0">
           <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ const QRGenerator: React.FC = () => {
 
         {/* Editor Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-8 space-y-10 custom-scrollbar">
-           
+
           {/* Section 1: Type Selection */}
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -458,108 +458,127 @@ const QRGenerator: React.FC = () => {
           {/* Section 3: Professional Appearance Customizer */}
           <section className="bg-muted/30 p-5 rounded-2xl border border-border">
             <div className="flex items-center gap-2 mb-4">
-               <Paintbrush className="w-4 h-4 text-muted-foreground" />
-               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block">Pro Customizer</Label>
+              <Paintbrush className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block">Pro Customizer</Label>
             </div>
 
             {/* Presets */}
             <div className="grid grid-cols-4 gap-2 mb-6">
-               <Button variant="outline" size="sm" className="text-xs" onClick={()=>applyPreset('minimal')}>Minimal</Button>
-               <Button variant="outline" size="sm" className="text-xs border-orange-500/50 text-orange-600 dark:text-orange-400" onClick={()=>applyPreset('cyber')}>Cyber</Button>
-               <Button variant="outline" size="sm" className="text-xs border-blue-400/50 text-blue-500" onClick={()=>applyPreset('soft')}>Soft</Button>
-               <Button variant="outline" size="sm" className="text-xs border-green-500/50 text-green-600" onClick={()=>applyPreset('organic')}>Organic</Button>
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => applyPreset('minimal')}>Minimal</Button>
+              <Button variant="outline" size="sm" className="text-xs border-orange-500/50 text-orange-600 dark:text-orange-400" onClick={() => applyPreset('cyber')}>Cyber</Button>
+              <Button variant="outline" size="sm" className="text-xs border-blue-400/50 text-blue-500" onClick={() => applyPreset('soft')}>Soft</Button>
+              <Button variant="outline" size="sm" className="text-xs border-green-500/50 text-green-600" onClick={() => applyPreset('organic')}>Organic</Button>
             </div>
-            
+
             <div className="space-y-5">
-              
+
               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                    <Label className="text-xs">Foreground Shape</Label>
-                    <Select value={qrConfig.dotsType} onValueChange={(val: any) => setQrConfig({...qrConfig, dotsType: val})}>
-                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="square">Standard Square</SelectItem>
-                        <SelectItem value="rounded">Rounded</SelectItem>
-                        <SelectItem value="dots">Dots</SelectItem>
-                        <SelectItem value="classy">Classy</SelectItem>
-                        <SelectItem value="classy-rounded">Classy Rounded</SelectItem>
-                        <SelectItem value="extra-rounded">Liquid Rounded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                 </div>
-                 <div className="space-y-2">
-                    <Label className="text-xs">Corner Eye Shape</Label>
-                    <Select value={qrConfig.cornersSquareType} onValueChange={(val: any) => setQrConfig({...qrConfig, cornersSquareType: val})}>
-                      <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="square">Square</SelectItem>
-                        <SelectItem value="extra-rounded">Rounded Inner</SelectItem>
-                        <SelectItem value="dot">Dot Focus</SelectItem>
-                      </SelectContent>
-                    </Select>
-                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Foreground Shape</Label>
+                  <Select value={qrConfig.dotsType} onValueChange={(val: any) => setQrConfig({ ...qrConfig, dotsType: val })}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="square">Standard Square</SelectItem>
+                      <SelectItem value="rounded">Rounded</SelectItem>
+                      <SelectItem value="dots">Dots</SelectItem>
+                      <SelectItem value="classy">Classy</SelectItem>
+                      <SelectItem value="classy-rounded">Classy Rounded</SelectItem>
+                      <SelectItem value="extra-rounded">Liquid Rounded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Corner Eye Shape</Label>
+                  <Select value={qrConfig.cornersSquareType} onValueChange={(val: any) => setQrConfig({ ...qrConfig, cornersSquareType: val })}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="square">Square</SelectItem>
+                      <SelectItem value="extra-rounded">Rounded Inner</SelectItem>
+                      <SelectItem value="dot">Dot Focus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Logo Injector */}
               <div className="space-y-2">
-                 <Label className="text-xs">Center Logo Upload</Label>
-                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="h-9 flex-1 relative overflow-hidden text-xs">
-                       <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                       <Upload className="w-3 h-3 mr-2" /> {qrConfig.logoImage ? "Replace Logo" : "Upload Logo"}
+                <Label className="text-xs">Center Logo Upload</Label>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" className="h-9 flex-1 relative overflow-hidden text-xs">
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    <Upload className="w-3 h-3 mr-2" /> {qrConfig.logoImage ? "Replace Logo" : "Upload Logo"}
+                  </Button>
+                  {qrConfig.logoImage && (
+                    <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => setQrConfig({ ...qrConfig, logoImage: undefined })}>
+                      <XCircle className="w-4 h-4" />
                     </Button>
-                    {qrConfig.logoImage && (
-                       <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => setQrConfig({...qrConfig, logoImage: undefined})}>
-                          <XCircle className="w-4 h-4" />
-                       </Button>
-                    )}
-                 </div>
+                  )}
+                </div>
               </div>
 
               <div className="h-px w-full bg-border/50" />
 
               <div className="space-y-3 pt-1">
-                 <div className="flex items-center justify-between">
-                    <Label className="text-xs">Main Color (Gradient Start)</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Main Color (Gradient Start)</Label>
+                  <Popover>
+                    <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
+                      <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.foregroundColor }} />
+                      {qrConfig.foregroundColor}
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 border-border z-50">
+                      <HexColorPicker color={qrConfig.foregroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, foregroundColor: clr })} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1">Gradient End <span className="opacity-50">(Optional)</span></Label>
+                  <div className="flex items-center gap-2">
+                    {qrConfig.gradientColor && (
+                      <XCircle className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-destructive" onClick={() => setQrConfig({ ...qrConfig, gradientColor: undefined })} />
+                    )}
                     <Popover>
                       <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
-                        <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.foregroundColor }} />
-                        {qrConfig.foregroundColor}
+                        <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.gradientColor || '#transparent' }} />
+                        {qrConfig.gradientColor || 'None'}
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 border-border z-50">
-                        <HexColorPicker color={qrConfig.foregroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, foregroundColor: clr })} />
+                        <HexColorPicker color={qrConfig.gradientColor || '#000000'} onChange={(clr) => setQrConfig({ ...qrConfig, gradientColor: clr })} />
                       </PopoverContent>
                     </Popover>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">Gradient End <span className="opacity-50">(Optional)</span></Label>
-                    <div className="flex items-center gap-2">
-                       {qrConfig.gradientColor && (
-                          <XCircle className="w-4 h-4 text-muted-foreground cursor-pointer hover:text-destructive" onClick={() => setQrConfig({...qrConfig, gradientColor: undefined})} />
-                       )}
-                       <Popover>
-                         <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
-                           <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.gradientColor || '#transparent' }} />
-                           {qrConfig.gradientColor || 'None'}
-                         </PopoverTrigger>
-                         <PopoverContent className="w-auto p-0 border-border z-50">
-                           <HexColorPicker color={qrConfig.gradientColor || '#000000'} onChange={(clr) => setQrConfig({ ...qrConfig, gradientColor: clr })} />
-                         </PopoverContent>
-                       </Popover>
-                    </div>
-                 </div>
-                 <div className="flex items-center justify-between">
-                    <Label className="text-xs">Background Color</Label>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Background Color</Label>
+                  <div className="flex items-center gap-2">
+                    {qrConfig.backgroundColor !== 'transparent' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px] uppercase font-bold tracking-wider text-muted-foreground hover:text-foreground"
+                        onClick={() => setQrConfig({ ...qrConfig, backgroundColor: 'transparent' })}
+                      >
+                        Clear
+                      </Button>
+                    )}
                     <Popover>
                       <PopoverTrigger className="flex items-center gap-2 border border-border rounded-md px-2 py-1 bg-background shadow-sm hover:bg-muted text-xs font-mono transition-colors">
-                        <div className="w-3 h-3 rounded-full border border-border mt-[1px]" style={{ backgroundColor: qrConfig.backgroundColor }} />
-                        {qrConfig.backgroundColor}
+                        <div
+                          className="w-3 h-3 rounded-full border border-border mt-[1px]"
+                          style={{
+                            backgroundColor: qrConfig.backgroundColor === 'transparent' ? 'transparent' : qrConfig.backgroundColor,
+                            backgroundImage: qrConfig.backgroundColor === 'transparent' ? 'repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%, #ccc 50% 75%, transparent 75% 100%)' : 'none',
+                            backgroundSize: '4px 4px'
+                          }}
+                        />
+                        {qrConfig.backgroundColor === 'transparent' ? 'Transparent' : qrConfig.backgroundColor}
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 border-border z-50">
-                        <HexColorPicker color={qrConfig.backgroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, backgroundColor: clr })} />
+                        <HexColorPicker color={qrConfig.backgroundColor === 'transparent' ? '#ffffff' : qrConfig.backgroundColor} onChange={(clr) => setQrConfig({ ...qrConfig, backgroundColor: clr })} />
                       </PopoverContent>
                     </Popover>
-                 </div>
+                  </div>
+                </div>
               </div>
 
             </div>
@@ -570,7 +589,7 @@ const QRGenerator: React.FC = () => {
 
       {/* RIGHT PANEL : CANVAS (Preview) */}
       <div className="h-[40vh] md:h-full md:flex-1 relative bg-secondary/50 flex flex-col items-center justify-center isolate overflow-hidden shrink-0">
-        
+
         {/* Subtle dot grid background for the "Canvas" feel */}
         <div
           className="absolute inset-0 z-[-1] opacity-40 dark:opacity-20"
